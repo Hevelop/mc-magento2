@@ -14,6 +14,12 @@ namespace Ebizmarts\MailChimp\Model\Plugin;
 class Subscriber
 {
     /**
+     * Application state
+     *
+     * @var \Magento\Framework\App\State
+     */
+    protected $_appState;
+    /**
      * @var \Ebizmarts\MailChimp\Helper\Data
      */
     protected $_helper;
@@ -40,7 +46,8 @@ class Subscriber
         \Ebizmarts\MailChimp\Helper\Data $helper,
         \Magento\Customer\Model\ResourceModel\CustomerRepository $customer,
         \Magento\Customer\Model\Session $customerSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\State $appState
     ) {
     
         $this->_helper          = $helper;
@@ -48,6 +55,7 @@ class Subscriber
         $this->_customerSession = $customerSession;
         $this->_storeManager    = $storeManager;
         $this->_api             = $this->_helper->getApi();
+        $this->_appState        = $appState;
     }
 
     public function beforeUnsubscribeCustomerById(
@@ -70,7 +78,9 @@ class Subscriber
         $customerId
     ) {
         $subscriber->loadByCustomerId($customerId);
-        $subscriber->setImportMode(true);
+        if($this->_appState->getAreaCode() !== "frontend") {
+            $subscriber->setImportMode(true);
+        }
         $storeId = $subscriber->getStoreId();
         if ($this->_helper->isMailChimpEnabled($storeId)) {
             $customer = $this->_customer->getById($customerId);
